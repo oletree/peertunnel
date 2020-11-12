@@ -42,8 +42,8 @@ public class PeerPipeClient implements PeerPipe {
 
 		group = new NioEventLoopGroup();
 
-		bootstrap.option(ChannelOption.SO_SNDBUF, 2048);
-		bootstrap.option(ChannelOption.SO_RCVBUF, 2048);
+		//bootstrap.option(ChannelOption.SO_SNDBUF, 20480);
+		//bootstrap.option(ChannelOption.SO_RCVBUF, 20480);
 		bootstrap.option(ChannelOption.SO_KEEPALIVE, true);
 		bootstrap.group(group).channel(NioSocketChannel.class).handler(new PeerMesaageInitializer(this,prop));
 

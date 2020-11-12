@@ -50,17 +50,19 @@ public class HexDumpTunnelFrontendHandler extends ChannelInboundHandlerAdapter {
     		return;
     	}
         ByteBuf in = (ByteBuf) inData;
-        int size = in.readableBytes();
-        if(size > 1024 ) {
-        	size = 1024;
+        while(in.readableBytes() != 0) {
+	        int size = in.readableBytes();
+	        if(size > PeerHeader.BODY_SIZE ) {
+	        	size = PeerHeader.BODY_SIZE;
+	        }
+	        byte[] body = new byte[size];
+	        in.readBytes(body);
+	        PeerHeader frontHeader = new PeerHeader(HEADER_VERSION, size, EnPeerCommand.SEND_TUNNEL);
+	        frontHeader.setFrontChannelId(ctx.channel().id().asLongText());
+	        logger.info("server: " + frontHeader.toString());
+	        PeerMessage msg = new PeerMessage(frontHeader, body);
+	        pipeChannel.writeAndFlush(msg);
         }
-        byte[] body = new byte[size];
-        in.readBytes(body);
-        PeerHeader frontHeader = new PeerHeader(HEADER_VERSION, size, EnPeerCommand.SEND_TUNNEL);
-        frontHeader.setFrontChannelId(ctx.channel().id().asLongText());
-        logger.info("server: " + frontHeader.toString());
-        PeerMessage msg = new PeerMessage(frontHeader, body);
-        pipeChannel.writeAndFlush(msg);
     }
     
     @Override

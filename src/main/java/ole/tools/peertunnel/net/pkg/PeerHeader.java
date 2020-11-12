@@ -4,6 +4,7 @@ import ole.tools.peertunnel.net.pkg.enums.EnPeerCommand;
 
 public class PeerHeader {
 	public static final int FRONT_CHANNEL_ID_SIZE = 60;
+	public static final int BODY_SIZE = 4096;
 	private int version;
 	private int contentLength;
 	private EnPeerCommand cmd;

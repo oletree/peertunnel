@@ -47,8 +47,8 @@ public class PeerTunnelFrontend {
 		bossGroup = new NioEventLoopGroup(1);
 		workerGroup = new NioEventLoopGroup();
 
-		serverBootstrap.option(ChannelOption.SO_SNDBUF, 1024);
-		serverBootstrap.option(ChannelOption.SO_RCVBUF, 1024);
+		serverBootstrap.option(ChannelOption.SO_SNDBUF, 10240);
+		serverBootstrap.option(ChannelOption.SO_RCVBUF, 10240);
 		serverBootstrap.option(ChannelOption.SO_KEEPALIVE, true);
 		serverBootstrap.group(bossGroup, workerGroup).channel(NioServerSocketChannel.class)
 //	                    .handler(new LoggingHandler(LogLevel.INFO))

@@ -19,7 +19,7 @@ public class PeerMessageDecoder extends ByteToMessageDecoder {
 	
 	@Override
 	protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
-
+		in.markReaderIndex();
 		int version = in.readInt();
 		int contentLength = in.readInt();
 		int cmd = in.readInt();
@@ -29,6 +29,10 @@ public class PeerMessageDecoder extends ByteToMessageDecoder {
 		in.readBytes(frontChannelIdByte);
 		String frontChannelId = new String(frontChannelIdByte);
 		if(contentLength > 0 ) {
+			if(in.readableBytes() < contentLength) {
+				in.resetReaderIndex();
+				return;
+			}
 			body = new byte[contentLength];
 			in.readBytes(body);
 		}

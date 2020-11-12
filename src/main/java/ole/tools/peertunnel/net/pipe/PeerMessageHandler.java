@@ -63,11 +63,13 @@ public class PeerMessageHandler extends SimpleChannelInboundHandler<PeerMessage>
 		}
 	}
 
-	private void sendTunnelData(PeerMessage msg) {
+	private void sendTunnelData(PeerMessage msg) throws InterruptedException {
 		logger.info("sendTunnelData" + msg.getBody() );
 		Channel channel = peerPipe.getTunnelChannel(msg.getHeader().getFrontChannelId());
-		ByteBuf body = Unpooled.copiedBuffer(msg.getBody()); 
-		channel.writeAndFlush(body);
+		if(channel != null ) {
+			ByteBuf body = Unpooled.copiedBuffer(msg.getBody()); 
+			channel.writeAndFlush(body).sync();
+		}
 	}
 
 	private void createBackendClient(PeerMessage msg) throws InterruptedException {
@@ -76,8 +78,8 @@ public class PeerMessageHandler extends SimpleChannelInboundHandler<PeerMessage>
 		EventLoopGroup group = null;
 		group = new NioEventLoopGroup();
 
-		bootstrap.option(ChannelOption.SO_SNDBUF, 1024);
-		bootstrap.option(ChannelOption.SO_RCVBUF, 1024);
+		//bootstrap.option(ChannelOption.SO_SNDBUF, 10240);
+		//bootstrap.option(ChannelOption.SO_RCVBUF, 10240);
 		bootstrap.option(ChannelOption.SO_KEEPALIVE, true);
 		bootstrap.group(group).channel(NioSocketChannel.class).handler(new HexDumpTunnelBackendHandler(peerPipe, msg.getHeader()));
 

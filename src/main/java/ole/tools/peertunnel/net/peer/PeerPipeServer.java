@@ -50,8 +50,8 @@ public class PeerPipeServer implements PeerPipe {
 		bossGroup = new NioEventLoopGroup(bossCount);
 		workerGroup = new NioEventLoopGroup(workerCount);
 
-		serverBootstrap.option(ChannelOption.SO_SNDBUF, 2048);
-		serverBootstrap.option(ChannelOption.SO_RCVBUF, 2048);
+		//serverBootstrap.option(ChannelOption.SO_SNDBUF, 20480);
+		//serverBootstrap.option(ChannelOption.SO_RCVBUF, 20480);
 		serverBootstrap.option(ChannelOption.SO_KEEPALIVE, true);
 		serverBootstrap.group(bossGroup, workerGroup).channel(NioServerSocketChannel.class)
 	                    .handler(new LoggingHandler(LogLevel.INFO))
