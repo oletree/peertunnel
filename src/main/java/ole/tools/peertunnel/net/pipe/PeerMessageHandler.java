@@ -57,8 +57,10 @@ public class PeerMessageHandler extends SimpleChannelInboundHandler<PeerMessage>
 		PeerHeader header = msg.getHeader();
 		logger.info("removeTunnel" +header.toString() );
 		Channel c = peerPipe.getTunnelChannel(header.getFrontChannelId());
-		c.close();
-		peerPipe.removeTunnelChannel(header.getFrontChannelId());
+		if(c != null) {
+			peerPipe.removeTunnelChannel(header.getFrontChannelId());
+			c.close();
+		}
 	}
 
 	private void sendTunnelData(PeerMessage msg) {

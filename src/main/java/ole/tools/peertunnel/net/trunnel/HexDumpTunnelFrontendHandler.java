@@ -66,14 +66,15 @@ public class HexDumpTunnelFrontendHandler extends ChannelInboundHandlerAdapter {
     public void channelInactive(ChannelHandlerContext ctx) {
     	String channelId = ctx.channel().id().asLongText();
     	logger.info(" inactivate : " + channelId );
-    	peerPipe.removeTunnelChannel(channelId);
-    	
-    	Channel pipeChannel = peerPipe.getChannel();
-    	
-		PeerHeader frontHeader = new PeerHeader(1,0, EnPeerCommand.REMOVE_TUNNEL );
-		frontHeader.setFrontChannelId(channelId);
-		PeerMessage msg = new PeerMessage(frontHeader, null);
-		pipeChannel.writeAndFlush(msg);
+    	Channel ch = peerPipe.getTunnelChannel(channelId);
+    	if(ch != null) {
+	    	peerPipe.removeTunnelChannel(channelId);
+	    	Channel pipeChannel = peerPipe.getChannel();
+			PeerHeader frontHeader = new PeerHeader(1,0, EnPeerCommand.REMOVE_TUNNEL );
+			frontHeader.setFrontChannelId(channelId);
+			PeerMessage msg = new PeerMessage(frontHeader, null);
+			pipeChannel.writeAndFlush(msg);
+    	}
     }
 	
 }
