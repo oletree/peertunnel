@@ -1,0 +1,18 @@
+peer:
+  # true 이면 서버 모드로 구동 되며 false 이면 client 모드로 구동 됩니다.
+  server_mode: false
+  server_info:
+    # ip는 client가 접속할 서버 ip 입니다.
+    ip: 127.0.0.1
+    # server가 client 접속을 받기 위한 포트 이며 동시에 client가 접속할 포트 입ㄴ디ㅏ.
+    port: 9500
+  tunnel:
+    # open_port는 server에서 tunnel용 open port 입니다.
+    open_port: 9501
+    # connect_port: client 접속하고자 하는 서버 포트
+    connect_port: 7502
+    # connect_ip: client 접속하고자 하는 서버 IP
+    connect_ip: 127.0.0.1
+
+
+ 
