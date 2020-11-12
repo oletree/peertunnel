@@ -49,9 +49,9 @@ public class HexDumpTunnelBackendHandler extends ChannelInboundHandlerAdapter {
     		peerPipe.removeTunnelChannel(header.getFrontChannelId());
 	    	Channel pipeChannel = peerPipe.getChannel();
 	    	
-			PeerHeader header = new PeerHeader(1,0, EnPeerCommand.REMOVE_TUNNEL );
-			header.setFrontChannelId(header.getFrontChannelId());
-			PeerMessage msg = new PeerMessage(header, null);
+			PeerHeader backHeader = new PeerHeader(1,0, EnPeerCommand.REMOVE_TUNNEL );
+			backHeader.setFrontChannelId(header.getFrontChannelId());
+			PeerMessage msg = new PeerMessage(backHeader, null);
 			pipeChannel.writeAndFlush(msg);
     	}
 
