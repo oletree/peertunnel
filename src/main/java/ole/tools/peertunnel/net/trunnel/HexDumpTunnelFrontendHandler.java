@@ -14,6 +14,7 @@ import ole.tools.peertunnel.net.pkg.PeerMessage;
 import ole.tools.peertunnel.net.pkg.enums.EnPeerCommand;
 
 public class HexDumpTunnelFrontendHandler extends ChannelInboundHandlerAdapter {
+	private final int HEADER_VERSION = 0;
 	
 	private Logger logger = LoggerFactory.getLogger(HexDumpTunnelFrontendHandler.class);
 	PeerPipe peerPipe;
@@ -31,7 +32,7 @@ public class HexDumpTunnelFrontendHandler extends ChannelInboundHandlerAdapter {
 			return;
 		}
 		
-		PeerHeader header = new PeerHeader(0,0, EnPeerCommand.CREATE_TUNNEL );
+		PeerHeader header = new PeerHeader(HEADER_VERSION,0, EnPeerCommand.CREATE_TUNNEL );
 		header.setFrontChannelId(inboundChannel.id().asLongText());
 		PeerMessage msg = new PeerMessage(header, null);
 		pipeChannel.writeAndFlush(msg);
@@ -55,7 +56,7 @@ public class HexDumpTunnelFrontendHandler extends ChannelInboundHandlerAdapter {
         }
         byte[] body = new byte[size];
         in.readBytes(body);
-        PeerHeader frontHeader = new PeerHeader(0, size, EnPeerCommand.SEND_TUNNEL);
+        PeerHeader frontHeader = new PeerHeader(HEADER_VERSION, size, EnPeerCommand.SEND_TUNNEL);
         frontHeader.setFrontChannelId(ctx.channel().id().asLongText());
         logger.info("server: " + frontHeader.toString());
         PeerMessage msg = new PeerMessage(frontHeader, body);
@@ -70,7 +71,7 @@ public class HexDumpTunnelFrontendHandler extends ChannelInboundHandlerAdapter {
     	if(ch != null) {
 	    	peerPipe.removeTunnelChannel(channelId);
 	    	Channel pipeChannel = peerPipe.getChannel();
-			PeerHeader frontHeader = new PeerHeader(1,0, EnPeerCommand.REMOVE_TUNNEL );
+			PeerHeader frontHeader = new PeerHeader(HEADER_VERSION,0, EnPeerCommand.REMOVE_TUNNEL );
 			frontHeader.setFrontChannelId(channelId);
 			PeerMessage msg = new PeerMessage(frontHeader, null);
 			pipeChannel.writeAndFlush(msg);
