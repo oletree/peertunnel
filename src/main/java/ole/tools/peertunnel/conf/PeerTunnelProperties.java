@@ -13,6 +13,8 @@ public class PeerTunnelProperties {
 
 	private ServerInfo serverInfo = new ServerInfo();
 
+	private TunnelInfo tunnel = new TunnelInfo();
+
 	public boolean isServerMode() {
 		return serverMode;
 	}
@@ -29,8 +31,16 @@ public class PeerTunnelProperties {
 		this.serverInfo = serverInfo;
 	}
 
+	public TunnelInfo getTunnel() {
+		return tunnel;
+	}
+
+	public void setTunnel(TunnelInfo tunnel) {
+		this.tunnel = tunnel;
+	}
+
 	public static class ServerInfo {
-		private int port = 8877;
+		private int port = 9500;
 		private String ip = "127.0.0.1";
 
 		public int getPort() {
@@ -48,7 +58,37 @@ public class PeerTunnelProperties {
 		public void setIp(String ip) {
 			this.ip = ip;
 		}
-		
+
+	}
+
+	public static class TunnelInfo {
+		private int openPort = 9501;
+		private int connectPort = 7502;
+		private String connectIp = "127.0.0.1";
+
+		public int getOpenPort() {
+			return openPort;
+		}
+
+		public void setOpenPort(int openPort) {
+			this.openPort = openPort;
+		}
+
+		public int getConnectPort() {
+			return connectPort;
+		}
+
+		public void setConnectPort(int connectPort) {
+			this.connectPort = connectPort;
+		}
+
+		public String getConnectIp() {
+			return connectIp;
+		}
+
+		public void setConnectIp(String connectIp) {
+			this.connectIp = connectIp;
+		}
 
 	}
 }
