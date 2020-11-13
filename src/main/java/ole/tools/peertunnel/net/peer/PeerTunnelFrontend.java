@@ -19,14 +19,16 @@ public class PeerTunnelFrontend {
 	
 	private Logger logger = LoggerFactory.getLogger(PeerTunnelFrontend.class);
 	
-	private PeerTunnelProperties prop;
+	private int openPort;
 	private PeerPipe peerPipe;
+	private String pipeChannelId;
 	
 
-	public PeerTunnelFrontend(PeerTunnelProperties prop, PeerPipe peerPipe) {
+	public PeerTunnelFrontend(int openPort, PeerPipe peerPipe, String pipeChannelId) {
 		super();
-		this.prop = prop;
+		this.openPort = openPort;
 		this.peerPipe = peerPipe;
+		this.pipeChannelId = pipeChannelId; 
 	}
 
 	ServerBootstrap serverBootstrap = new ServerBootstrap();
@@ -52,12 +54,12 @@ public class PeerTunnelFrontend {
 		serverBootstrap.option(ChannelOption.SO_KEEPALIVE, true);
 		serverBootstrap.group(bossGroup, workerGroup).channel(NioServerSocketChannel.class)
 //	                    .handler(new LoggingHandler(LogLevel.INFO))
-				.childHandler(new PeerTunnelFrontendInitializer(peerPipe));
+				.childHandler(new PeerTunnelFrontendInitializer(peerPipe, pipeChannelId));
 
 		// Bind the corresponding port number and start the connection on the listening
 		// port
 		try {
-			ch = serverBootstrap.bind(prop.getTunnel().getOpenPort()).sync().channel();
+			ch = serverBootstrap.bind(openPort).sync().channel();
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			logger.error("Frontend Error",e);

@@ -24,8 +24,6 @@ public class PeerTunnelConfig {
 		PeerPipe retval;
 		if(peerTunnelProperties.isServerMode()) {
 			retval = new PeerPipeServer(peerTunnelProperties);
-			PeerTunnelFrontend peertunnelfrontend = new PeerTunnelFrontend(peerTunnelProperties, retval);
-			peertunnelfrontend.start();
 		}else {
 			retval = new PeerPipeClient(peerTunnelProperties);
 		}

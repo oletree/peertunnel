@@ -22,7 +22,6 @@ public class PeerMesaageInitializer extends ChannelInitializer<SocketChannel> {
 	@Override
 	protected void initChannel(SocketChannel ch) throws Exception {
 
-		peerPipe.setChannel(ch);
 		ChannelPipeline pipeline = ch.pipeline();
 		pipeline.addLast(new PeerMessageEncoder());
 		pipeline.addLast(new PeerMessageDecoder());

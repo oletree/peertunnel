@@ -10,7 +10,6 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
 import ole.tools.peertunnel.net.pkg.PeerHeader;
 import ole.tools.peertunnel.net.pkg.PeerMessage;
-import ole.tools.peertunnel.net.pkg.enums.EnPeerCommand;
 
 public class PeerMessageDecoder extends ByteToMessageDecoder {
 	
@@ -19,16 +18,14 @@ public class PeerMessageDecoder extends ByteToMessageDecoder {
 	
 	@Override
 	protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
+		if( in.readableBytes() < PeerHeader.HEADER_SIZE) return;
+		
 		in.markReaderIndex();
-		int version = in.readInt();
-		int contentLength = in.readInt();
-		int cmd = in.readInt();
-		byte[] body = null;
-		EnPeerCommand enCmd = EnPeerCommand.values()[cmd];
-		byte[] frontChannelIdByte = new byte[PeerHeader.FRONT_CHANNEL_ID_SIZE];
-		in.readBytes(frontChannelIdByte);
-		String frontChannelId = new String(frontChannelIdByte);
-		if(contentLength > 0 ) {
+		PeerHeader header = new PeerHeader(in);
+		int contentLength = header.getContentLength();
+		byte []body = null;
+		
+		if(header.getContentLength() > 0 ) {
 			if(in.readableBytes() < contentLength) {
 				in.resetReaderIndex();
 				return;
@@ -36,10 +33,7 @@ public class PeerMessageDecoder extends ByteToMessageDecoder {
 			body = new byte[contentLength];
 			in.readBytes(body);
 		}
-		
-		PeerHeader header = new PeerHeader(version, contentLength, enCmd);
-		logger.info("decode: " + enCmd.toString());
-		header.setFrontChannelId(frontChannelId);
+		logger.info("decode: " + header.toString());
 		PeerMessage message = new PeerMessage(header, body);
 		
 		out.add(message);

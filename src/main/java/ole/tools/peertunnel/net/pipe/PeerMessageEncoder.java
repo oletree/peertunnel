@@ -18,14 +18,8 @@ public class PeerMessageEncoder extends MessageToByteEncoder<PeerMessage>{
 	protected void encode(ChannelHandlerContext ctx, PeerMessage msg, ByteBuf out) throws Exception {
 		
 		PeerHeader header = msg.getHeader();
-		logger.info("encode:" + header.toString());
-		out.writeInt(header.getVersion());
-		out.writeInt(header.getContentLength());
-		out.writeInt(header.getCmd().ordinal());
-		byte[] frontChannelIdByte = header.getFrontChannelId().getBytes();
-		if( PeerHeader.FRONT_CHANNEL_ID_SIZE != frontChannelIdByte.length )throw new RuntimeException("front Channel Id Size not match");
-
-		out.writeBytes(frontChannelIdByte);
+		logger.info("encode: " + header.toString());
+		header.writeToBytebuf(out);
 		
 		if(msg.getBody() != null)
 			out.writeBytes(msg.getBody());

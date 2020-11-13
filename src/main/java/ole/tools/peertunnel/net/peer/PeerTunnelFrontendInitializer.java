@@ -10,13 +10,15 @@ import ole.tools.peertunnel.net.trunnel.HexDumpTunnelFrontendHandler;
 public class PeerTunnelFrontendInitializer extends ChannelInitializer<SocketChannel> {
 
 
+	private String pipeChannelId;
 	private PeerPipe peerPipe;
 
 	
 	
-	public PeerTunnelFrontendInitializer(PeerPipe peerPipe) {
+	public PeerTunnelFrontendInitializer(PeerPipe peerPipe, String pipeChannelId) {
 		super();
 		this.peerPipe = peerPipe;
+		this.pipeChannelId = pipeChannelId;
 	}
 
 
@@ -24,7 +26,7 @@ public class PeerTunnelFrontendInitializer extends ChannelInitializer<SocketChan
 	protected void initChannel(SocketChannel ch) throws Exception {
 		
 		ChannelPipeline pipeline = ch.pipeline();
-		pipeline.addLast(new HexDumpTunnelFrontendHandler(peerPipe));
+		pipeline.addLast(new HexDumpTunnelFrontendHandler(peerPipe, pipeChannelId));
 		
 	}
 

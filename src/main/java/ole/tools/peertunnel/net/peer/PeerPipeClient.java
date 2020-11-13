@@ -17,6 +17,7 @@ import ole.tools.peertunnel.net.PeerPipe;
 public class PeerPipeClient implements PeerPipe {
 	
 	HashMap <String, Channel> tunnelMap = new HashMap<>();
+	HashMap <String, Channel> pipeMap = new HashMap<>();
 	PeerTunnelProperties prop;
 	private String ip;
 	private int port;
@@ -54,7 +55,7 @@ public class PeerPipeClient implements PeerPipe {
 	}
 
 	@Override
-	public Channel getChannel() {
+	public Channel getPipeChannel(String pipeChannel) {
 		return ch;
 	}
 	

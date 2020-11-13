@@ -17,16 +17,18 @@ public class HexDumpTunnelFrontendHandler extends ChannelInboundHandlerAdapter {
 	private final int HEADER_VERSION = 0;
 	
 	private Logger logger = LoggerFactory.getLogger(HexDumpTunnelFrontendHandler.class);
-	PeerPipe peerPipe;
+	private PeerPipe peerPipe;
+	private String pipeChannelId;
 
-	public HexDumpTunnelFrontendHandler(PeerPipe peerPipe) {
+	public HexDumpTunnelFrontendHandler(PeerPipe peerPipe, String pipeChannelId) {
 		this.peerPipe = peerPipe;
+		this.pipeChannelId = pipeChannelId;
 	}
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
     	Channel inboundChannel = ctx.channel();
-		Channel pipeChannel = peerPipe.getChannel();
+		Channel pipeChannel = peerPipe.getChannel(pipeChannelId);
 		if(pipeChannel == null) {
 			inboundChannel.close();
 			return;
