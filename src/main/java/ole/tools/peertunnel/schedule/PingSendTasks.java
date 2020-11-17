@@ -27,7 +27,7 @@ public class PingSendTasks {
 	
 	@Scheduled(fixedRate=60000)
 	public void sendPingMessage() throws Exception {
-		logger.info("start Scheduler");
+		logger.debug("start Scheduler");
 		if(!peerTunnelProperties.isServerMode()) {
 			HashMap<String, Channel> map = peerTunnel.getPipeChannelMap();
 			
