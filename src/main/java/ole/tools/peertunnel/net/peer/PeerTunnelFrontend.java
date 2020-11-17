@@ -11,7 +11,6 @@ import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
-import ole.tools.peertunnel.conf.PeerTunnelProperties;
 import ole.tools.peertunnel.net.PeerPipe;
 
 public class PeerTunnelFrontend {
@@ -39,13 +38,14 @@ public class PeerTunnelFrontend {
 
 	@PreDestroy
 	public void onDestroy() throws Exception {
+		logger.info("frontend Distroyed");
 		if (bossGroup != null)
 			bossGroup.shutdownGracefully();
 		if (workerGroup != null)
 			workerGroup.shutdownGracefully();
 	}
 	
-	public void start() {
+	public void start() throws InterruptedException {
 		bossGroup = new NioEventLoopGroup(1);
 		workerGroup = new NioEventLoopGroup();
 
@@ -58,12 +58,12 @@ public class PeerTunnelFrontend {
 
 		// Bind the corresponding port number and start the connection on the listening
 		// port
-		try {
-			ch = serverBootstrap.bind(openPort).sync().channel();
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			logger.error("Frontend Error",e);
-		}
+		ch = serverBootstrap.bind(openPort).sync().channel();
+		logger.info("FrontEnd Start portNumber : " + openPort);
+	}
+	
+	public Channel getChannel() {
+		return ch;
 	}
 	
 }

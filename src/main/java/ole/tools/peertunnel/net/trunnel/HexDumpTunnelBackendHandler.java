@@ -18,16 +18,22 @@ public class HexDumpTunnelBackendHandler extends ChannelInboundHandlerAdapter {
 	private Logger logger = LoggerFactory.getLogger(HexDumpTunnelBackendHandler.class);
 	private PeerPipe peerPipe;
 	private PeerHeader header;
+	private String pipeChannelId;
 
-	public HexDumpTunnelBackendHandler(PeerPipe peerPipe, PeerHeader header) {
+	public HexDumpTunnelBackendHandler(String pipeChannelId, PeerPipe peerPipe, PeerHeader header) {
 		this.peerPipe = peerPipe;
 		this.header = header;
+		this.pipeChannelId = pipeChannelId;
 	}
 	
+	@Override
+	public void channelActive(ChannelHandlerContext ctx) {
+		peerPipe.putTunnelChannel(header.getFrontChannelId(), ctx.channel());
+	}
 	
 	@Override
     public void channelRead(ChannelHandlerContext ctx, Object inData) throws Exception {
-    	Channel pipeChannel = peerPipe.getChannel();
+    	Channel pipeChannel = peerPipe.getPipeChannel(pipeChannelId);
         ByteBuf in = (ByteBuf) inData;
         while(in.readableBytes() != 0) {
             int size = in.readableBytes();
@@ -38,6 +44,7 @@ public class HexDumpTunnelBackendHandler extends ChannelInboundHandlerAdapter {
             in.readBytes(body);
             PeerHeader backHeader = new PeerHeader(HEADER_VERSION, size, EnPeerCommand.SEND_TUNNEL);
             backHeader.setFrontChannelId(header.getFrontChannelId());
+            backHeader.setPipeChannelId(pipeChannelId);
             PeerMessage msg = new PeerMessage(backHeader, body);
             pipeChannel.writeAndFlush(msg).sync();        	
         }
@@ -49,13 +56,32 @@ public class HexDumpTunnelBackendHandler extends ChannelInboundHandlerAdapter {
     	Channel ch = peerPipe.getTunnelChannel(header.getFrontChannelId());
     	if(ch != null) {
     		peerPipe.removeTunnelChannel(header.getFrontChannelId());
-	    	Channel pipeChannel = peerPipe.getChannel();
+	    	Channel pipeChannel = peerPipe.getPipeChannel(pipeChannelId);
 	    	
 			PeerHeader backHeader = new PeerHeader(HEADER_VERSION,0, EnPeerCommand.REMOVE_TUNNEL );
 			backHeader.setFrontChannelId(header.getFrontChannelId());
+			backHeader.setPipeChannelId(pipeChannelId);
 			PeerMessage msg = new PeerMessage(backHeader, null);
 			pipeChannel.writeAndFlush(msg);
     	}
+
+    }
+    
+    @Override
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
+    	logger.info(" exception : " + ctx.channel().id().asLongText() +"," + header.getFrontChannelId());
+    	Channel ch = peerPipe.getTunnelChannel(header.getFrontChannelId());
+    	if(ch != null) {
+    		peerPipe.removeTunnelChannel(header.getFrontChannelId());
+	    	Channel pipeChannel = peerPipe.getPipeChannel(pipeChannelId);
+	    	
+			PeerHeader backHeader = new PeerHeader(HEADER_VERSION,0, EnPeerCommand.REMOVE_TUNNEL );
+			backHeader.setFrontChannelId(header.getFrontChannelId());
+			backHeader.setPipeChannelId(pipeChannelId);
+			PeerMessage msg = new PeerMessage(backHeader, null);
+			pipeChannel.writeAndFlush(msg);
+    	}
+    	
 
     }
 }
