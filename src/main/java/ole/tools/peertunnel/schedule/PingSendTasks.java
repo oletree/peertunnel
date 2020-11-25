@@ -12,6 +12,9 @@ import org.springframework.stereotype.Component;
 import io.netty.channel.Channel;
 import ole.tools.peertunnel.conf.PeerTunnelProperties;
 import ole.tools.peertunnel.net.PeerPipe;
+import ole.tools.peertunnel.net.pkg.PeerHeader;
+import ole.tools.peertunnel.net.pkg.PeerMessage;
+import ole.tools.peertunnel.net.pkg.enums.EnPeerCommand;
 
 @Component
 public class PingSendTasks {
@@ -26,7 +29,7 @@ public class PingSendTasks {
 
 	
 	@Scheduled(fixedRate=60000)
-	public void sendPingMessage() throws Exception {
+	public void reConnectMessage() throws Exception {
 		logger.debug("start Scheduler");
 		if(!peerTunnelProperties.isServerMode()) {
 			HashMap<String, Channel> map = peerTunnel.getPipeChannelMap();
@@ -40,6 +43,27 @@ public class PingSendTasks {
 			if( map.isEmpty()  ) {
 				peerTunnel.start();
 			}
+		}
+	}
+	
+	@Scheduled(fixedRate=60000)
+	public void sendPingMessage() throws Exception {
+
+		if(peerTunnelProperties.isServerMode()) {
+			HashMap<String, Channel> map = peerTunnel.getPipeChannelMap();
+			
+			for(Entry<String, Channel> c : map.entrySet()) {
+				Channel ch = c.getValue();
+				if( ch.isActive() ) {
+					String pipeChannelId = c.getKey();
+					PeerHeader header = new PeerHeader(0, 0, EnPeerCommand.PING);
+					header.setPipeChannelId(pipeChannelId);
+					header.setFrontChannelId(pipeChannelId);
+					PeerMessage msg = new PeerMessage(header, null);
+					ch.writeAndFlush(msg);
+				}
+			}
+			
 		}
 	}
 }
