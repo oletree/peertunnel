@@ -43,6 +43,9 @@ public class PeerMessageHandler extends SimpleChannelInboundHandler<PeerMessage>
 
 		PeerHeader header = msg.getHeader();
 		switch (header.getCmd()) {
+		case PING:
+			logger.debug("get Ping");
+			break;
 		case CREATE_TUNNEL:
 			createBackendClient(ctx.channel().id().asLongText(), msg);
 			break;
