@@ -7,48 +7,34 @@ import ole.tools.peertunnel.net.PeerPipe;
 
 public abstract class AbstractPeerPipe implements PeerPipe {
 
-	HashMap <String, PeerTunnelFrontend> frontMap = new HashMap<>(); 
+
 	HashMap <String, Channel> tunnelMap = new HashMap<>();
-	HashMap <String, Channel> pipeMap = new HashMap<>();
+	HashMap <String, PipeInfo> pipeMap = new HashMap<>();
 
-	@Override
-	public void putFrontend(String pipeChannelId, PeerTunnelFrontend frontend) {
-		frontMap.put(pipeChannelId, frontend);
-	}
 	
 	@Override
-	public PeerTunnelFrontend removeFrontend(String pipeChannelId) {
-		return frontMap.remove(pipeChannelId);
-	}
-	
-	@Override
-	public PeerTunnelFrontend getFrontend(String pipeChannelId) {
-		return frontMap.get(pipeChannelId);
-	}
-
-	@Override
-	public HashMap<String, PeerTunnelFrontend> getFrontendMap() {
-		return frontMap;
-	}
-	
-	
-	@Override
-	public HashMap<String, Channel> getPipeChannelMap() {
+	public HashMap<String, PipeInfo> getPipeChannelMap() {
 		return pipeMap;
 	}
 	
 	@Override
-	public void putPipeChannel(String pipeChannelId, Channel ch) {
+	public void putPipeChannel(String pipeChannelId, PipeInfo ch) {
 		pipeMap.put(pipeChannelId, ch);		
 	}
 	
 	@Override
 	public Channel getPipeChannel(String pipeChannel) {
-		return pipeMap.get(pipeChannel);
+		PipeInfo info = pipeMap.get(pipeChannel);
+		if(info == null) return null;
+		return info.getPipeChannel();
+	}
+	
+	public PipeInfo getPipeInfo(String pipeChannelId) {
+		return pipeMap.get(pipeChannelId);
 	}
 
 	@Override
-	public Channel removePipeChannel(String pipeChannelId) {
+	public PipeInfo removePipeChannel(String pipeChannelId) {
 		return pipeMap.remove(pipeChannelId);		
 	}
 

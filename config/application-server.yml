@@ -10,6 +10,6 @@ peer:
     # open_port는 server에서 tunnel용 open port 입니다.
     open_port: 9501
     # connect_port: client 접속하고자 하는 서버 포트
-    connect_port: 7502
+    connect_port: 8080
     # connect_ip: client 접속하고자 하는 서버 IP
-    connect_ip: 127.0.0.1
+    connect_ip: 172.18.10.30

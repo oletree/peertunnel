@@ -42,6 +42,7 @@ public class PeerTunnelProperties {
 	public static class ServerInfo {
 		private int port = 9500;
 		private String ip = "127.0.0.1";
+		private int pingDuration = 90;
 
 		public int getPort() {
 			return port;
@@ -59,6 +60,14 @@ public class PeerTunnelProperties {
 			this.ip = ip;
 		}
 
+		public int getPingDuration() {
+			return pingDuration;
+		}
+
+		public void setPingDuration(int pingDuration) {
+			this.pingDuration = pingDuration;
+		}
+		
 	}
 
 	public static class TunnelInfo {

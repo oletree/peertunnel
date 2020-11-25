@@ -1,5 +1,7 @@
 package ole.tools.peertunnel.schedule;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map.Entry;
 
@@ -12,6 +14,8 @@ import org.springframework.stereotype.Component;
 import io.netty.channel.Channel;
 import ole.tools.peertunnel.conf.PeerTunnelProperties;
 import ole.tools.peertunnel.net.PeerPipe;
+import ole.tools.peertunnel.net.peer.PeerTunnelFrontend;
+import ole.tools.peertunnel.net.peer.PipeInfo;
 import ole.tools.peertunnel.net.pkg.PeerHeader;
 import ole.tools.peertunnel.net.pkg.PeerMessage;
 import ole.tools.peertunnel.net.pkg.enums.EnPeerCommand;
@@ -32,11 +36,12 @@ public class PingSendTasks {
 	public void reConnectMessage() throws Exception {
 		logger.debug("start Scheduler");
 		if(!peerTunnelProperties.isServerMode()) {
-			HashMap<String, Channel> map = peerTunnel.getPipeChannelMap();
+			HashMap<String, PipeInfo> map = peerTunnel.getPipeChannelMap();
 			
-			for(Entry<String, Channel> c : map.entrySet()) {
+			for(Entry<String, PipeInfo> c : map.entrySet()) {
 				if(c.getValue() == null ) map.remove(c.getKey());
-				if( ! c.getValue().isActive() ) {
+				Channel ch = c.getValue().getPipeChannel();
+				if( ! ch.isActive() ) {
 					map.remove(c.getKey());
 				}
 			}
@@ -49,11 +54,10 @@ public class PingSendTasks {
 	@Scheduled(fixedRate=60000)
 	public void sendPingMessage() throws Exception {
 
-		if(peerTunnelProperties.isServerMode()) {
-			HashMap<String, Channel> map = peerTunnel.getPipeChannelMap();
-			
-			for(Entry<String, Channel> c : map.entrySet()) {
-				Channel ch = c.getValue();
+		if(!peerTunnelProperties.isServerMode()) {
+			HashMap<String, PipeInfo> map = peerTunnel.getPipeChannelMap();
+			for(Entry<String, PipeInfo> c : map.entrySet()) {
+				Channel ch = c.getValue().getPipeChannel();
 				if( ch.isActive() ) {
 					String pipeChannelId = c.getKey();
 					PeerHeader header = new PeerHeader(0, 0, EnPeerCommand.PING);
@@ -61,6 +65,36 @@ public class PingSendTasks {
 					header.setFrontChannelId(pipeChannelId);
 					PeerMessage msg = new PeerMessage(header, null);
 					ch.writeAndFlush(msg);
+				}
+			}
+			
+		}
+	}
+	
+	@Scheduled(fixedRate=60000)
+	public void removePipe() throws Exception {
+
+		if(peerTunnelProperties.isServerMode()) {
+			HashMap<String, PipeInfo> map = peerTunnel.getPipeChannelMap();
+			for(Entry<String, PipeInfo> c : map.entrySet()) {
+				PipeInfo info = c.getValue();
+				Channel ch = c.getValue().getPipeChannel();
+				if( ch.isActive() ) {
+					LocalDateTime now = LocalDateTime.now();
+					Duration duration = Duration.between(info.getLastPingDate(), now);
+					if( duration.getSeconds() > peerTunnelProperties.getServerInfo().getPingDuration() ) {
+						map.remove(c.getKey());
+						logger.info("remove frontend pipe " + c.getKey());
+						PeerTunnelFrontend frontend = info.getFrontend();
+						if(frontend == null) {
+							logger.error("remove frontend pipe " + c.getKey());
+						} else {
+							frontend.getChannel().close();
+						}
+						
+						ch.close();
+						
+					}
 				}
 			}
 			

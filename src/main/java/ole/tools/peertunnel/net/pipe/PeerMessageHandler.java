@@ -1,5 +1,6 @@
 package ole.tools.peertunnel.net.pipe;
 
+import java.time.LocalDateTime;
 import java.util.Map.Entry;
 
 import org.slf4j.Logger;
@@ -20,6 +21,7 @@ import io.netty.util.concurrent.FutureListener;
 import ole.tools.peertunnel.conf.PeerTunnelProperties;
 import ole.tools.peertunnel.net.PeerPipe;
 import ole.tools.peertunnel.net.peer.PeerTunnelFrontend;
+import ole.tools.peertunnel.net.peer.PipeInfo;
 import ole.tools.peertunnel.net.pkg.PeerHeader;
 import ole.tools.peertunnel.net.pkg.PeerMessage;
 import ole.tools.peertunnel.net.pkg.enums.EnPeerCommand;
@@ -44,7 +46,7 @@ public class PeerMessageHandler extends SimpleChannelInboundHandler<PeerMessage>
 		PeerHeader header = msg.getHeader();
 		switch (header.getCmd()) {
 		case PING:
-			logger.debug("get Ping");
+			readPingMessage(ctx, msg);
 			break;
 		case CREATE_TUNNEL:
 			createBackendClient(ctx.channel().id().asLongText(), msg);
@@ -63,17 +65,29 @@ public class PeerMessageHandler extends SimpleChannelInboundHandler<PeerMessage>
 		}
 	}
 
+	private void readPingMessage(ChannelHandlerContext ctx, PeerMessage msg) {
+		PipeInfo p = peerPipe.getPipeInfo(msg.getHeader().getPipeChannelId());
+		if(p == null) {
+			logger.info("ping not found pipeInfo ");
+		}else {
+			p.setLastPingDate(LocalDateTime.now());
+		}
+		
+	}
+
 	@Override
 	public void channelInactive(ChannelHandlerContext ctx) {
 
 		logger.info(" inactivate pipe : ");
-		for (Entry<String, Channel> cm : peerPipe.getPipeChannelMap().entrySet()) {
-
-			if (!cm.getValue().isActive()) {
+		for (Entry<String, PipeInfo> cm : peerPipe.getPipeChannelMap().entrySet()) {
+			PipeInfo info = cm.getValue();
+			Channel channel = info.getPipeChannel();
+			if (!channel.isActive()) {
 				logger.info("remove pipe " + cm.getKey());
 				peerPipe.removePipeChannel(cm.getKey());
-				PeerTunnelFrontend pf = peerPipe.getFrontend(cm.getKey());
-				pf.getChannel().close();
+				PeerTunnelFrontend pf = info.getFrontend();
+				if(pf != null)
+					pf.getChannel().close();
 			}
 		}
 	}
@@ -89,8 +103,9 @@ public class PeerMessageHandler extends SimpleChannelInboundHandler<PeerMessage>
 			logger.error("FrontEnd Start Error", e);
 			ctx.channel().close();
 		}
-		peerPipe.putFrontend(header.getPipeChannelId(), frontend);
-		peerPipe.putPipeChannel(header.getPipeChannelId(), ctx.channel());
+		PipeInfo info = new PipeInfo(header.getPipeChannelId(), ctx.channel());
+		info.setFrontend(frontend);
+		peerPipe.putPipeChannel(header.getPipeChannelId(), info);
 
 	}
 
