@@ -53,5 +53,10 @@ public abstract class AbstractPeerPipe implements PeerPipe {
 	public Channel removeTunnelChannel(String channelId) {
 		return tunnelMap.remove(channelId);
 	}
+	
+	@Override
+	public HashMap <String, Channel> getTunnelChannelMap(){
+		return tunnelMap;
+	}
 
 }

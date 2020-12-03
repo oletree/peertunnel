@@ -26,6 +26,8 @@ public interface PeerPipe {
 	
 	public Channel removeTunnelChannel(String channelId);
 	
+	public HashMap <String, Channel> getTunnelChannelMap();
+	
 	
 
 }
