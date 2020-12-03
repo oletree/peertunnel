@@ -66,4 +66,12 @@ public class PeerTunnelFrontend {
 		return ch;
 	}
 	
+	public void shutdown() {
+		logger.info("frontend stop");
+		if (bossGroup != null)
+			bossGroup.shutdownGracefully();
+		if (workerGroup != null)
+			workerGroup.shutdownGracefully();
+	}
+	
 }

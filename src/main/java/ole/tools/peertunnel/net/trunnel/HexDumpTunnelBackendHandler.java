@@ -8,6 +8,7 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import ole.tools.peertunnel.net.PeerPipe;
+import ole.tools.peertunnel.net.peer.PipeInfo;
 import ole.tools.peertunnel.net.pkg.PeerHeader;
 import ole.tools.peertunnel.net.pkg.PeerMessage;
 import ole.tools.peertunnel.net.pkg.enums.EnPeerCommand;
@@ -28,7 +29,8 @@ public class HexDumpTunnelBackendHandler extends ChannelInboundHandlerAdapter {
 	
 	@Override
 	public void channelActive(ChannelHandlerContext ctx) {
-		peerPipe.putTunnelChannel(header.getFrontChannelId(), ctx.channel());
+		PipeInfo info = peerPipe.getPipeInfo(pipeChannelId);
+		info.putTunnelChannel(header.getFrontChannelId(), ctx.channel());
 	}
 	
 	@Override
@@ -53,9 +55,10 @@ public class HexDumpTunnelBackendHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelInactive(ChannelHandlerContext ctx) {
     	logger.info(" inactivate : " + ctx.channel().id().asLongText() +"," + header.getFrontChannelId());
-    	Channel ch = peerPipe.getTunnelChannel(header.getFrontChannelId());
+    	PipeInfo info = peerPipe.getPipeInfo(pipeChannelId);
+    	Channel ch = info.getTunnelChannel(header.getFrontChannelId());
     	if(ch != null) {
-    		peerPipe.removeTunnelChannel(header.getFrontChannelId());
+    		info.removeTunnelChannel(header.getFrontChannelId());
 	    	Channel pipeChannel = peerPipe.getPipeChannel(pipeChannelId);
 	    	
 			PeerHeader backHeader = new PeerHeader(HEADER_VERSION,0, EnPeerCommand.REMOVE_TUNNEL );
@@ -70,9 +73,10 @@ public class HexDumpTunnelBackendHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
     	logger.info(" exception : " + ctx.channel().id().asLongText() +"," + header.getFrontChannelId());
-    	Channel ch = peerPipe.getTunnelChannel(header.getFrontChannelId());
+    	PipeInfo info = peerPipe.getPipeInfo(pipeChannelId);
+    	Channel ch = info.getTunnelChannel(header.getFrontChannelId());
     	if(ch != null) {
-    		peerPipe.removeTunnelChannel(header.getFrontChannelId());
+    		info.removeTunnelChannel(header.getFrontChannelId());
 	    	Channel pipeChannel = peerPipe.getPipeChannel(pipeChannelId);
 	    	
 			PeerHeader backHeader = new PeerHeader(HEADER_VERSION,0, EnPeerCommand.REMOVE_TUNNEL );

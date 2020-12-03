@@ -1,8 +1,11 @@
 package ole.tools.peertunnel.net.peer;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map.Entry;
 
 import io.netty.channel.Channel;
+import io.netty.channel.nio.NioEventLoopGroup;
 
 public class PipeInfo {
 	
@@ -10,6 +13,8 @@ public class PipeInfo {
 	private Channel pipeChannel;
 	private LocalDateTime lastPingDate;
 	private PeerTunnelFrontend frontend;
+	private HashMap<String, Channel> tunnelMap = new HashMap<>();
+	private NioEventLoopGroup backandGroup = new NioEventLoopGroup();
 	
 	
 	public PipeInfo(String pipeChannelId, Channel pipeChannel) {
@@ -43,6 +48,40 @@ public class PipeInfo {
 
 	public void setFrontend(PeerTunnelFrontend frontend) {
 		this.frontend = frontend;
+	}
+	
+
+	public void putTunnelChannel(String channelId, Channel ch) {
+		tunnelMap.put(channelId, ch);
+	}
+
+	public Channel getTunnelChannel(String channelId) {
+		return tunnelMap.get(channelId);
+	}
+	
+
+	public Channel removeTunnelChannel(String channelId) {
+		return tunnelMap.remove(channelId);
+	}
+	
+	public NioEventLoopGroup getBackendGroup() {
+		return backandGroup;
+	}
+
+
+	public void closeAll() {
+		if(frontend != null)
+			frontend.shutdown();
+		if(backandGroup != null)
+			backandGroup.shutdownGracefully();
+		
+		for( Entry<String, Channel> v : tunnelMap.entrySet()) {
+			String key = v.getKey();
+			Channel tchannel = v.getValue();
+			tchannel.close();
+			tunnelMap.remove(key);
+		}
+
 	}
 
 }

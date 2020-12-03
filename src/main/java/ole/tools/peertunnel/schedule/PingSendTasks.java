@@ -40,19 +40,14 @@ public class PingSendTasks {
 			
 			for(Entry<String, PipeInfo> c : map.entrySet()) {
 				if(c.getValue() == null ) map.remove(c.getKey());
-				Channel ch = c.getValue().getPipeChannel();
+				PipeInfo info = c.getValue();
+				Channel ch = info.getPipeChannel();
 				if( ! ch.isActive() ) {
+					info.closeAll();
 					map.remove(c.getKey());
 				}
 			}
 			if( map.isEmpty()  ) {
-				HashMap<String, Channel> mapTunnel = peerTunnel.getTunnelChannelMap();
-				for( Entry<String, Channel> v : mapTunnel.entrySet()) {
-					String key = v.getKey();
-					Channel tchannel = v.getValue();
-					tchannel.close();
-					mapTunnel.remove(key);
-				}
 				peerTunnel.start();
 			}
 		}

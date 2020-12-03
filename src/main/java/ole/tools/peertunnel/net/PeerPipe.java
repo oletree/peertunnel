@@ -16,18 +16,8 @@ public interface PeerPipe {
 	
 	public PipeInfo getPipeInfo(String pipeChannelId);
 	
-	public PipeInfo removePipeChannel(String pipeChannelId);
+	public PipeInfo removePipeInfo(String pipeChannelId);
 	
 	public HashMap <String, PipeInfo> getPipeChannelMap();
 	
-	public void putTunnelChannel(String channelId, Channel ch);
-
-	public Channel getTunnelChannel(String channelId);
-	
-	public Channel removeTunnelChannel(String channelId);
-	
-	public HashMap <String, Channel> getTunnelChannelMap();
-	
-	
-
 }

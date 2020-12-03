@@ -11,10 +11,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelOption;
-import io.netty.channel.EventLoopGroup;
 import io.netty.channel.SimpleChannelInboundHandler;
-import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.FutureListener;
@@ -84,11 +81,10 @@ public class PeerMessageHandler extends SimpleChannelInboundHandler<PeerMessage>
 			Channel channel = info.getPipeChannel();
 			if (!channel.isActive()) {
 				logger.info("remove pipe " + cm.getKey());
-				peerPipe.removePipeChannel(cm.getKey());
-				PeerTunnelFrontend pf = info.getFrontend();
-				if(pf != null)
-					pf.getChannel().close();
+				peerPipe.removePipeInfo(cm.getKey());
+				info.closeAll();
 			}
+			
 		}
 	}
 
@@ -111,17 +107,21 @@ public class PeerMessageHandler extends SimpleChannelInboundHandler<PeerMessage>
 
 	private void removeBackendClient(PeerMessage msg) {
 		PeerHeader header = msg.getHeader();
+		String pipeChannelId = header.getPipeChannelId();
+		PipeInfo info = peerPipe.getPipeInfo(pipeChannelId);
 		logger.info("removeTunnel:" + header.toString());
-		Channel c = peerPipe.getTunnelChannel(header.getFrontChannelId());
+		Channel c = info.removeTunnelChannel(header.getFrontChannelId());
 		if (c != null) {
-			peerPipe.removeTunnelChannel(header.getFrontChannelId());
 			c.close();
 		}
 	}
 
 	private void sendTunnelData(PeerMessage msg) throws InterruptedException {
 		logger.info("sendTunnelData:" + msg.getHeader().getContentLength());
-		Channel channel = peerPipe.getTunnelChannel(msg.getHeader().getFrontChannelId());
+		PeerHeader header = msg.getHeader();
+		String pipeChannelId = header.getPipeChannelId();
+		PipeInfo info = peerPipe.getPipeInfo(pipeChannelId);
+		Channel channel = info.getTunnelChannel(msg.getHeader().getFrontChannelId());
 		if (channel != null) {
 			ByteBuf body = Unpooled.copiedBuffer(msg.getBody());
 			channel.writeAndFlush(body).sync();
@@ -133,13 +133,11 @@ public class PeerMessageHandler extends SimpleChannelInboundHandler<PeerMessage>
 	private void createBackendClient(String pipeChannelId, PeerMessage msg) {
 
 		Bootstrap bootstrap = new Bootstrap();
-		EventLoopGroup group = null;
-		group = new NioEventLoopGroup();
-
 		// bootstrap.option(ChannelOption.SO_SNDBUF, 10240);
 		// bootstrap.option(ChannelOption.SO_RCVBUF, 10240);
 		// bootstrap.option(ChannelOption.SO_KEEPALIVE, true);
-		bootstrap.group(group).channel(NioSocketChannel.class)
+		PipeInfo info = peerPipe.getPipeInfo(pipeChannelId);
+		bootstrap.group(info.getBackendGroup()).channel(NioSocketChannel.class)
 				.handler(new HexDumpTunnelBackendHandler(pipeChannelId, peerPipe, msg.getHeader()));
 
 		// Bind the corresponding port number and start the connection on the listening
@@ -165,7 +163,7 @@ public class PeerMessageHandler extends SimpleChannelInboundHandler<PeerMessage>
 
 					}).sync().channel();
 			logger.info("create Backend Ok");
-			peerPipe.putTunnelChannel(msg.getHeader().getFrontChannelId(), channel);
+			info.putTunnelChannel(msg.getHeader().getFrontChannelId(), channel);
 		} catch (InterruptedException e) {
 			logger.error("createBackend Error", e);
 			Channel pipe = peerPipe.getPipeChannel(pipeChannelId);
