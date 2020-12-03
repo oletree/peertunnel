@@ -138,7 +138,7 @@ public class PeerMessageHandler extends SimpleChannelInboundHandler<PeerMessage>
 
 		// bootstrap.option(ChannelOption.SO_SNDBUF, 10240);
 		// bootstrap.option(ChannelOption.SO_RCVBUF, 10240);
-		bootstrap.option(ChannelOption.SO_KEEPALIVE, true);
+		// bootstrap.option(ChannelOption.SO_KEEPALIVE, true);
 		bootstrap.group(group).channel(NioSocketChannel.class)
 				.handler(new HexDumpTunnelBackendHandler(pipeChannelId, peerPipe, msg.getHeader()));
 
