@@ -32,31 +32,10 @@ public abstract class AbstractPeerPipe implements PeerPipe {
 	public PipeInfo getPipeInfo(String pipeChannelId) {
 		return pipeMap.get(pipeChannelId);
 	}
+	
+	public PipeInfo removePipeInfo(String pipeChannelId) {
+		return pipeMap.remove(pipeChannelId);
+	}
 
-	@Override
-	public PipeInfo removePipeChannel(String pipeChannelId) {
-		return pipeMap.remove(pipeChannelId);		
-	}
-
-	
-	@Override
-	public void putTunnelChannel(String channelId, Channel ch) {
-		tunnelMap.put(channelId, ch);
-	}
-	@Override
-	public Channel getTunnelChannel(String channelId) {
-		return tunnelMap.get(channelId);
-	}
-	
-	
-	@Override
-	public Channel removeTunnelChannel(String channelId) {
-		return tunnelMap.remove(channelId);
-	}
-	
-	@Override
-	public HashMap <String, Channel> getTunnelChannelMap(){
-		return tunnelMap;
-	}
 
 }
