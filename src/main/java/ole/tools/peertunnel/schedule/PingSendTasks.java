@@ -91,7 +91,7 @@ public class PingSendTasks {
 						if(frontend == null) {
 							logger.error("remove frontend pipe " + c.getKey());
 						} else {
-							frontend.getChannel().close();
+							info.closeAll();
 						}
 						
 						ch.close();
