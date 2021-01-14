@@ -14,7 +14,6 @@ import org.springframework.stereotype.Component;
 import io.netty.channel.Channel;
 import ole.tools.peertunnel.conf.PeerTunnelProperties;
 import ole.tools.peertunnel.net.PeerPipe;
-import ole.tools.peertunnel.net.peer.PeerTunnelFrontend;
 import ole.tools.peertunnel.net.peer.PipeInfo;
 import ole.tools.peertunnel.net.pkg.PeerHeader;
 import ole.tools.peertunnel.net.pkg.PeerMessage;
@@ -85,18 +84,14 @@ public class PingSendTasks {
 					LocalDateTime now = LocalDateTime.now();
 					Duration duration = Duration.between(info.getLastPingDate(), now);
 					if( duration.getSeconds() > peerTunnelProperties.getServerInfo().getPingDuration() ) {
+						logger.info("remove frontend pipe");
 						map.remove(c.getKey());
-						logger.info("remove frontend pipe " + c.getKey());
-						PeerTunnelFrontend frontend = info.getFrontend();
-						if(frontend == null) {
-							logger.error("remove frontend pipe " + c.getKey());
-						} else {
-							info.closeAll();
-						}
-						
-						ch.close();
-						
+						info.closeAll();
 					}
+				}else{
+					logger.info("remove frontend pipe by channel not Active");
+					map.remove(c.getKey());
+					info.closeAll();
 				}
 			}
 			

@@ -70,8 +70,13 @@ public class PipeInfo {
 
 
 	public void closeAll() {
+		
+		if(pipeChannel != null)
+			pipeChannel.close();
+		
 		if(frontend != null)
 			frontend.shutdown();
+		
 		if(backandGroup != null)
 			backandGroup.shutdownGracefully();
 		
