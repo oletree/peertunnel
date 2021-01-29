@@ -10,7 +10,7 @@ public interface PeerPipe {
 	
 	public void start() throws Exception;
 	
-	public void putPipeChannel(String pipeChannelId, PipeInfo ch);
+	public void putPipeInfo(String pipeChannelId, PipeInfo ch);
 	
 	public Channel getPipeChannel(String pipeChannelId);
 	

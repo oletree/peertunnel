@@ -1,4 +1,4 @@
-package ole.tools.peertunnel.net.trunnel;
+package ole.tools.peertunnel.net.tunnel;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

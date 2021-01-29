@@ -54,9 +54,9 @@ public class PeerPipeClient extends AbstractPeerPipe {
 			String pipeChannelId = ch.id().asLongText();
 			String openPortNum = String.valueOf(prop.getTunnel().getOpenPort());
 			byte[] msgBody = openPortNum.getBytes();
-			PipeInfo info = new PipeInfo(pipeChannelId, ch);
-			putPipeChannel(pipeChannelId, info);
-			PeerHeader header = new PeerHeader(3, msgBody.length, EnPeerCommand.CREATE_PIPE);
+			PipeInfo info = new PipeInfo(pipeChannelId, ch, prop.getServerInfo().getPingDuration());
+			putPipeInfo(pipeChannelId, info);
+			PeerHeader header = new PeerHeader(3, msgBody.length, EnPeerCommand.CREATE_PIPE_FRONTEND);
 			header.setPipeChannelId(pipeChannelId);
 			header.setFrontChannelId(pipeChannelId);
 			PeerMessage msg = new PeerMessage(header, msgBody);

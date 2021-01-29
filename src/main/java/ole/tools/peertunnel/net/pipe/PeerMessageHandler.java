@@ -17,12 +17,13 @@ import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.FutureListener;
 import ole.tools.peertunnel.conf.PeerTunnelProperties;
 import ole.tools.peertunnel.net.PeerPipe;
+import ole.tools.peertunnel.net.peer.EnPipeStatus;
 import ole.tools.peertunnel.net.peer.PeerTunnelFrontend;
 import ole.tools.peertunnel.net.peer.PipeInfo;
 import ole.tools.peertunnel.net.pkg.PeerHeader;
 import ole.tools.peertunnel.net.pkg.PeerMessage;
 import ole.tools.peertunnel.net.pkg.enums.EnPeerCommand;
-import ole.tools.peertunnel.net.trunnel.HexDumpTunnelBackendHandler;
+import ole.tools.peertunnel.net.tunnel.HexDumpTunnelBackendHandler;
 
 public class PeerMessageHandler extends SimpleChannelInboundHandler<PeerMessage> {
 
@@ -45,8 +46,11 @@ public class PeerMessageHandler extends SimpleChannelInboundHandler<PeerMessage>
 		case PING:
 			readPingMessage(ctx, msg);
 			break;
+		case PING_DONE:
+			readPingDoneMessage(ctx, msg);
+			break;
 		case CREATE_TUNNEL:
-			createBackendClient(ctx.channel().id().asLongText(), msg);
+			createBackendClient(msg);
 			break;
 		case SEND_TUNNEL:
 			sendTunnelData(msg);
@@ -54,8 +58,11 @@ public class PeerMessageHandler extends SimpleChannelInboundHandler<PeerMessage>
 		case REMOVE_TUNNEL:
 			removeBackendClient(msg);
 			break;
-		case CREATE_PIPE:
+		case CREATE_PIPE_FRONTEND:
 			createPipeFrontend(ctx, msg);
+			break;
+		case CREATE_PIPE_FRONTEND_DONE:
+			createPipeFrontendDone(ctx, msg);
 			break;
 		default:
 			throw new RuntimeException("command working not Setting");
@@ -66,6 +73,22 @@ public class PeerMessageHandler extends SimpleChannelInboundHandler<PeerMessage>
 		PipeInfo p = peerPipe.getPipeInfo(msg.getHeader().getPipeChannelId());
 		if(p == null) {
 			logger.info("ping not found pipeInfo ");
+			ctx.channel().close();
+		}else {
+			p.setLastPingDate(LocalDateTime.now());
+			PeerHeader header = new PeerHeader(0, 0, EnPeerCommand.PING_DONE);
+			header.setPipeChannelId(p.getPipeChannelId());
+			header.setFrontChannelId(p.getPipeChannelId());
+			PeerMessage msgDone = new PeerMessage(header, null);
+			ctx.channel().writeAndFlush(msgDone);
+		}
+		
+	}
+	private void readPingDoneMessage(ChannelHandlerContext ctx, PeerMessage msg) {
+		PipeInfo p = peerPipe.getPipeInfo(msg.getHeader().getPipeChannelId());
+		if(p == null) {
+			logger.info("ping doen not found pipeInfo ");
+			ctx.channel().close();
 		}else {
 			p.setLastPingDate(LocalDateTime.now());
 		}
@@ -92,17 +115,36 @@ public class PeerMessageHandler extends SimpleChannelInboundHandler<PeerMessage>
 		String portStr = new String(msg.getBody());
 		PeerHeader header = msg.getHeader();
 		int portNumber = Integer.parseInt(portStr);
-		PeerTunnelFrontend frontend = new PeerTunnelFrontend(portNumber, peerPipe, header.getPipeChannelId());
+		String pipeChannelId = header.getPipeChannelId();
+		PeerTunnelFrontend frontend = new PeerTunnelFrontend(portNumber, peerPipe, pipeChannelId);
 		try {
 			frontend.start();
+			PipeInfo info = new PipeInfo(header.getPipeChannelId(), ctx.channel(),prop.getServerInfo().getPingDuration() );
+			info.setFrontend(frontend);
+			info.setStatus(EnPipeStatus.PIPE_TUNNEL);
+			peerPipe.putPipeInfo(pipeChannelId, info);
+			
+			PeerHeader doneHeader = new PeerHeader(0, 0, EnPeerCommand.CREATE_PIPE_FRONTEND_DONE);
+			doneHeader.setPipeChannelId(pipeChannelId);
+			doneHeader.setFrontChannelId(pipeChannelId);
+			PeerMessage msgDone = new PeerMessage(doneHeader, null);
+			ctx.channel().writeAndFlush(msgDone);
+
 		} catch (InterruptedException e) {
 			logger.error("FrontEnd Start Error", e);
 			ctx.channel().close();
 		}
-		PipeInfo info = new PipeInfo(header.getPipeChannelId(), ctx.channel());
-		info.setFrontend(frontend);
-		peerPipe.putPipeChannel(header.getPipeChannelId(), info);
-
+				
+	}
+	private void createPipeFrontendDone(ChannelHandlerContext ctx, PeerMessage msg) {
+		PeerHeader header = msg.getHeader();
+		PipeInfo info = peerPipe.getPipeInfo(header.getPipeChannelId());
+		if(info == null) {
+			logger.error("pipeInfo not Found {}", header.getPipeChannelId());
+			ctx.channel().close();
+		}else {
+			info.setStatus(EnPipeStatus.PIPE_TUNNEL);
+		}
 	}
 
 	private void removeBackendClient(PeerMessage msg) {
@@ -130,12 +172,14 @@ public class PeerMessageHandler extends SimpleChannelInboundHandler<PeerMessage>
 		}
 	}
 
-	private void createBackendClient(String pipeChannelId, PeerMessage msg) {
+	private void createBackendClient(PeerMessage msg) {
 
 		Bootstrap bootstrap = new Bootstrap();
 		// bootstrap.option(ChannelOption.SO_SNDBUF, 10240);
 		// bootstrap.option(ChannelOption.SO_RCVBUF, 10240);
 		// bootstrap.option(ChannelOption.SO_KEEPALIVE, true);
+		PeerHeader header = msg.getHeader();
+		String pipeChannelId = header.getPipeChannelId();
 		PipeInfo info = peerPipe.getPipeInfo(pipeChannelId);
 		bootstrap.group(info.getBackendGroup()).channel(NioSocketChannel.class)
 				.handler(new HexDumpTunnelBackendHandler(pipeChannelId, peerPipe, msg.getHeader()));
@@ -168,10 +212,10 @@ public class PeerMessageHandler extends SimpleChannelInboundHandler<PeerMessage>
 			logger.error("createBackend Error", e);
 			Channel pipe = peerPipe.getPipeChannel(pipeChannelId);
 			// remove tunnel Connection
-			PeerHeader header = new PeerHeader(4, 0, EnPeerCommand.REMOVE_TUNNEL);
-			header.setPipeChannelId(pipeChannelId);
-			header.setFrontChannelId(msg.getHeader().getFrontChannelId());
-			PeerMessage rmMsg = new PeerMessage(header, null);
+			PeerHeader rmHeader = new PeerHeader(4, 0, EnPeerCommand.REMOVE_TUNNEL);
+			rmHeader.setPipeChannelId(pipeChannelId);
+			rmHeader.setFrontChannelId(msg.getHeader().getFrontChannelId());
+			PeerMessage rmMsg = new PeerMessage(rmHeader, null);
 			pipe.writeAndFlush(rmMsg);
 
 

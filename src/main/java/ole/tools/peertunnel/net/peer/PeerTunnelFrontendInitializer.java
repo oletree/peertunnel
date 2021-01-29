@@ -4,7 +4,7 @@ import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.socket.SocketChannel;
 import ole.tools.peertunnel.net.PeerPipe;
-import ole.tools.peertunnel.net.trunnel.HexDumpTunnelFrontendHandler;
+import ole.tools.peertunnel.net.tunnel.HexDumpTunnelFrontendHandler;
 
 
 public class PeerTunnelFrontendInitializer extends ChannelInitializer<SocketChannel> {

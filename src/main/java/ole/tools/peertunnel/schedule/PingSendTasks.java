@@ -1,7 +1,5 @@
 package ole.tools.peertunnel.schedule;
 
-import java.time.Duration;
-import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map.Entry;
 
@@ -14,6 +12,7 @@ import org.springframework.stereotype.Component;
 import io.netty.channel.Channel;
 import ole.tools.peertunnel.conf.PeerTunnelProperties;
 import ole.tools.peertunnel.net.PeerPipe;
+import ole.tools.peertunnel.net.peer.EnPipeStatus;
 import ole.tools.peertunnel.net.peer.PipeInfo;
 import ole.tools.peertunnel.net.pkg.PeerHeader;
 import ole.tools.peertunnel.net.pkg.PeerMessage;
@@ -52,14 +51,15 @@ public class PingSendTasks {
 		}
 	}
 	
-	@Scheduled(fixedRate=60000)
+	@Scheduled(fixedRate=30000)
 	public void sendPingMessage() throws Exception {
 
 		if(!peerTunnelProperties.isServerMode()) {
 			HashMap<String, PipeInfo> map = peerTunnel.getPipeChannelMap();
 			for(Entry<String, PipeInfo> c : map.entrySet()) {
-				Channel ch = c.getValue().getPipeChannel();
-				if( ch.isActive() ) {
+				PipeInfo info = c.getValue();
+				Channel ch = info.getPipeChannel();
+				if( info.getStatus() == EnPipeStatus.PIPE_TUNNEL &&  ch.isActive() ) {
 					String pipeChannelId = c.getKey();
 					PeerHeader header = new PeerHeader(0, 0, EnPeerCommand.PING);
 					header.setPipeChannelId(pipeChannelId);
@@ -68,33 +68,25 @@ public class PingSendTasks {
 					ch.writeAndFlush(msg);
 				}
 			}
-			
 		}
 	}
 	
-	@Scheduled(fixedRate=60000)
-	public void removePipe() throws Exception {
+	@Scheduled(fixedRate=10000)
+	public void checkPipeStatus() throws Exception {
 
-		if(peerTunnelProperties.isServerMode()) {
-			HashMap<String, PipeInfo> map = peerTunnel.getPipeChannelMap();
-			for(Entry<String, PipeInfo> c : map.entrySet()) {
-				PipeInfo info = c.getValue();
-				Channel ch = c.getValue().getPipeChannel();
-				if( ch.isActive() ) {
-					LocalDateTime now = LocalDateTime.now();
-					Duration duration = Duration.between(info.getLastPingDate(), now);
-					if( duration.getSeconds() > peerTunnelProperties.getServerInfo().getPingDuration() ) {
-						logger.info("remove frontend pipe");
-						map.remove(c.getKey());
-						info.closeAll();
-					}
-				}else{
-					logger.info("remove frontend pipe by channel not Active");
-					map.remove(c.getKey());
-					info.closeAll();
-				}
+		HashMap<String, PipeInfo> map = peerTunnel.getPipeChannelMap();
+		for(Entry<String, PipeInfo> c : map.entrySet()) {
+			PipeInfo info = c.getValue();
+			if( info.isStatusOK() ) {
+				logger.debug("is ok pipe channel id = " , info.getPipeChannelId() );
+			}else {
+				logger.error(info.getError());
+				logger.info("remove frontend pipe by channel not Active");
+				map.remove(c.getKey());
+				info.closeAll();
 			}
-			
 		}
+			
+		
 	}
 }

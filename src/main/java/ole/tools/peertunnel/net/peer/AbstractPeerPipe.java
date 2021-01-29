@@ -18,16 +18,17 @@ public abstract class AbstractPeerPipe implements PeerPipe {
 	}
 	
 	@Override
-	public void putPipeChannel(String pipeChannelId, PipeInfo ch) {
-		pipeMap.put(pipeChannelId, ch);		
-	}
-	
-	@Override
 	public Channel getPipeChannel(String pipeChannel) {
 		PipeInfo info = pipeMap.get(pipeChannel);
 		if(info == null) return null;
 		return info.getPipeChannel();
 	}
+	
+	@Override
+	public void putPipeInfo(String pipeChannelId, PipeInfo ch) {
+		pipeMap.put(pipeChannelId, ch);		
+	}
+	
 	
 	public PipeInfo getPipeInfo(String pipeChannelId) {
 		return pipeMap.get(pipeChannelId);
