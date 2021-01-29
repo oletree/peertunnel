@@ -94,7 +94,7 @@ public class PeerHeader {
 	}
 
 	public String toString() {
-		return "version="+version+",contentLength="+contentLength+",cmd="+cmd + ",chid=" + frontChannelId+",pid=" + pipeChannelId;
+		return "version="+version+",contentLength="+contentLength+",cmd="+cmd +",pid=" + pipeChannelId + ",fid=" + frontChannelId;
 		
 	}
 }
