@@ -39,7 +39,6 @@ public class PeerMessageHandler extends SimpleChannelInboundHandler<PeerMessage>
 
 	@Override
 	public void channelRead0(ChannelHandlerContext ctx, PeerMessage msg) throws Exception {
-		logger.info(msg.getHeader().toString());
 
 		PeerHeader header = msg.getHeader();
 		switch (header.getCmd()) {
